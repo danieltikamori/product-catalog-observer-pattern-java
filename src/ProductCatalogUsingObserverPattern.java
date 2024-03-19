@@ -1,129 +1,166 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+// Importing necessary libraries
+import java.util.*;
 
-// Interface Observer
+// Interface for Observer
 interface Observer {
+    // Method to update the observer with a product name
     void update(String productName);
 }
 
-// Classe concreta Observer
+// Concrete class for User implementing the Observer interface
 class User implements Observer {
+    // User attributes
     private String name;
     private boolean subscribed;
 
+    // Constructor to initialize user with name and subscription status
     public User(String name, boolean subscribed) {
         this.name = name;
         this.subscribed = subscribed;
     }
 
-    public String getName() { // Added getter method for name
+    // Getter method for user name
+    public String getName() {
         return name;
     }
 
+    // Method to check if the user is subscribed
     public boolean isSubscribed() {
         return subscribed;
     }
 
+    // Method to set the subscription status of the user
     public void setSubscribed(boolean subscribed) {
         this.subscribed = subscribed;
     }
 
+    // Method to update the user with a product name
     @Override
     public void update(String productName) {
+        // Display a notification if the user is subscribed
         if (subscribed) {
-            System.out.println("Notificacao recebida: Novo produto adicionado - " + productName);
+            System.out.println("User " + name + " received a notification - product: " + productName);
         }
     }
 }
 
-// Interface Observable
+// Interface for Observable
 interface CatalogObservable {
+    // Method to add an observer
     void addObserver(Observer observer);
+    // Method to remove an observer
     void removeObserver(Observer observer);
+    // Method to notify all observers with a product name
     void notifyObservers(String productName);
 }
 
-// Classe concreta Observable
+// Concrete class for Catalog implementing the CatalogObservable interface
 class Catalog implements CatalogObservable {
+    // List to hold observers
     private List<Observer> observers = new ArrayList<>();
-    Map<String, User> users = new HashMap<>(); // Changed to protected access
+    // Map to hold user information (changed to protected access)
+    Map<String, User> users = new HashMap<>();
 
-    protected void addUser(User user) { // Added protected method to add users
+    // Method to add a user to the catalog with observer pattern
+    protected void addUser(User user) {
         observers.add(user);
         users.put(user.getName(), user);
     }
 
+    // Method to add an observer to the catalog
     @Override
     public void addObserver(Observer observer) {
-        addUser((User) observer); // Use the protected method
+        addUser((User) observer); // Using the protected method to add the observer
     }
 
-    protected void removeUser(String userName) { // Added protected method to remove users
+    // Method to remove a user from the catalog
+    protected void removeUser(String userName) {
         User user = users.remove(userName);
         if (user != null) {
             observers.remove(user);
         }
     }
 
+    // Method to remove an observer from the catalog
     @Override
     public void removeObserver(Observer observer) {
-        removeUser(((User) observer).getName()); // Use the protected method
+        removeUser(((User) observer).getName()); // Using the protected method to remove the observer
     }
 
+    // Method to notify all observers with a product name
     @Override
     public void notifyObservers(String productName) {
-        for (Observer observer : observers) {
-            if (((User) observer).isSubscribed()) {
-                observer.update(productName);
+        if (productName != null) {
+            for (Observer observer : observers) {
+                // Check if the observer is subscribed before updating
+                if (((User) observer).isSubscribed()) {
+                    observer.update(productName);
+                }
             }
         }
     }
 
-    public void addProduct(String name, String description, double price) {
-        notifyObservers(name);
+    // Method to add a product to the catalog and notify observers
+    public void addProduct(String name, String productDescription, double productPrice) {
+        if (name != null) {
+            notifyObservers(name);
+        }
     }
 }
 
+// Main class for executing the program
 public class ProductCatalogUsingObserverPattern {
     public static void main(String[] args) {
+        // Creating a Scanner object for user input
         Scanner scanner = new Scanner(System.in);
 
-        // Criando catálogo e usuário
+        // Creating a catalog instance
         Catalog catalog = new Catalog();
 
-        // Entrada do nome do usuário
-        System.out.println("Digite o seu nome: ");
+        // Getting user input for user name
+        System.out.println("Type the user name: ");
         String name = scanner.nextLine();
 
-        // Verificação da ação desejada
-        System.out.println("Digite 'cancelar' para cancelar a assinatura ou qualquer outra tecla para continuar: ");
+        // Asking for user action
+        System.out.println("Type 'cancel' to cancel the subscription or any other key to add a new product: ");
         String actionChoice = scanner.nextLine();
 
-        if (actionChoice.equalsIgnoreCase("cancelar")) {
-            // Cancelamento da assinatura
-            if (catalog.users.containsKey(name)) {
+        // Handling user action
+        if (actionChoice.equalsIgnoreCase("cancel")) {
+            // Cancelling the subscription if the user exists
+            if (catalog.users.containsKey(name) && catalog.users.get(name) != null) {
                 catalog.removeObserver(catalog.users.get(name));
-                System.out.println("Assinatura cancelada com sucesso!");
+                System.out.println("Subscription canceled successfully.");
             } else {
-                System.out.println("Usuário não encontrado.");
+                System.out.println("User not found.");
             }
         } else {
-            // Adição de novo produto
-            System.out.println("Digite o nome do produto: ");
+            // Adding a new product
+            System.out.println("Type the product name: ");
             String productName = scanner.nextLine();
-            System.out.println("Digite a descrição do produto: ");
+            System.out.println("Type the product description: ");
             String productDescription = scanner.nextLine();
-            System.out.println("Digite o preço do produto: ");
-            double productPrice = scanner.nextDouble();
+            System.out.println("Type the product price: ");
+            double productPrice;
+            while (true) {
+                try {
+                    productPrice = scanner.nextDouble();
+                    break;  // Exit the loop if valid input is provided
+                } catch (InputMismatchException e) {
+                    System.out.println("Invalid input. Please enter a valid price.");
+                    scanner.next();  // Clear the invalid input
+                }
+            }
 
-            scanner.nextLine(); // Consumir a quebra de linha após nextDouble
+            // Consuming the newline character after nextDouble
+            scanner.nextLine();
 
-            // Adição do produto ao catálogo
+            // Adding the product to the catalog
             catalog.addProduct(productName, productDescription, productPrice);
-            System.out.println("Produto adicionado com sucesso!");
+            System.out.println("Product added successfully.");
         }
+
+        // To prevent resource leaks, you should close the Scanner object after its use. You can do this by adding the following line at the end of the main method:
+        scanner.close();
     }
 }
